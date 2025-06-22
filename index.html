@@ -1,0 +1,143 @@
+<!DOCTYPE html><html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>GESTÃO DE GASTOS NO MERCADO</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #121212; color: #fff; margin: 0; padding: 20px; }
+    h1 { text-align: center; color: #ffd700; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #555; padding: 8px; text-align: left; }
+    th { background-color: #333; color: #ffd700; }
+    input[type=number] { width: 100px; padding: 4px; background: #1e1e1e; color: #fff; border: 1px solid #444; }
+    .total { font-weight: bold; margin-top: 10px; }
+    .download, .sugestao-btn { padding: 10px; margin: 10px 5px 0 0; background: #28a745; color: #fff; border: none; cursor: pointer; border-radius: 5px; }
+    .sugestao-btn { background: #ff9800; }
+    .box { background: #1f1f1f; padding: 15px; border-radius: 10px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>📊 GESTÃO DE GASTOS NO MERCADO</h1><label>💰 Salário Semanal: R$ <input type="number" id="salario" value="0" onchange="calcular()"></label>
+
+  <table id="tabela">
+    <thead>
+      <tr><th>Item</th><th>Preço Unitário</th><th>Quantidade</th><th>Total</th></tr>
+    </thead>
+    <tbody id="lista-mercado"></tbody>
+  </table>  <div class="total">Total gasto: R$ <span id="total-gasto">0.00</span></div>
+  <div class="total">Saldo restante: R$ <span id="saldo">0.00</span></div><button class="download" onclick="baixarTXT()">📥 Baixar Relatório (.TXT)</button> <button class="sugestao-btn" onclick="gerarConselhoPorQuantidade()">📉 Economia por Quantidade</button> <button class="sugestao-btn" onclick="gerarConselhoPorEssencialidade()">⚖️ Economia por Essencialidade</button>
+
+  <div class="box" id="conselho-box"></div>  <footer style="text-align:center; margin-top:40px; font-size:12px; color:#888">© Todos os direitos reservados - moreldeveloper</footer>  <script>
+    const itens = [
+      "🍚 Arroz", "🥣 Feijão", "🛢️ Óleo", "🧂 Sal", "🍬 Açúcar", "🌾 Trigo", "🥩 Carne", "🌭 Linguiça",
+      "🥚 Ovo", "🍗 Frango", "🌭 Salsicha", "🥓 Calabresa", "🥓 Bacon", "🍖 Presunto", "🧀 Queijo",
+      "🧈 Manteiga", "🥄 Requeijão", "🍅 Ketchup", "🥪 Maionese", "🍪 Bolacha", "🥨 Torradinha",
+      "🍟 Salgadinho", "🧃 Suco", "🥤 Refrigerante", "🍦 Iogurte", "🍮 Danone", "🥛 Leite", "🍫 Achocolatado",
+      "🍫 Chocolate", "🍬 Guloseimas", "🍞 Padaria", "🍎 Frutas", "🥬 Verduras", "🧽 Detergente",
+      "🧼 Sabão em pó", "🧴 Amaciante", "🧪 Água Sanitária", "🧹 Limpa Tudo", "🧼 Desinfetante",
+      "🧼 Sabonete", "🧴 Shampoo", "🧴 Condicionador", "🧼 Desodorante", "🧴 Creme de Pentear",
+      "🧴 Creme de Pele", "🪥 Pasta de Dente", "🍼 Fralda", "📦 Outros"
+    ];
+
+    const naoEssenciais = ["🍬 Guloseimas", "🥤 Refrigerante", "🍫 Chocolate", "🍟 Salgadinho", "🍪 Bolacha",
+      "🥨 Torradinha", "🍮 Danone", "🍦 Iogurte", "🍫 Achocolatado", "🍞 Padaria", "📦 Outros", "🧃 Suco"]
+
+    function criarTabela() {
+      const corpo = document.getElementById("lista-mercado");
+      itens.forEach(nome => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${nome}</td>
+          <td><input type="number" step="0.01" onchange="calcular()"></td>
+          <td><input type="number" onchange="calcular()"></td>
+          <td class="total-item">R$ 0.00</td>
+        `;
+        corpo.appendChild(tr);
+      });
+    }
+
+    function calcular() {
+      const linhas = document.querySelectorAll("#lista-mercado tr");
+      let total = 0;
+      linhas.forEach(linha => {
+        const preco = parseFloat(linha.children[1].children[0].value) || 0;
+        const qtd = parseFloat(linha.children[2].children[0].value) || 0;
+        const subt = preco * qtd;
+        linha.children[3].innerText = `R$ ${subt.toFixed(2)}`;
+        total += subt;
+      });
+      const salario = parseFloat(document.getElementById("salario").value) || 0;
+      document.getElementById("total-gasto").innerText = total.toFixed(2);
+      document.getElementById("saldo").innerText = (salario - total).toFixed(2);
+    }
+
+    function baixarTXT() {
+      const linhas = document.querySelectorAll("#lista-mercado tr");
+      let txt = `Relatório de Compras Semanais\n\nSalário: R$ ${document.getElementById("salario").value}\n\n`;
+      linhas.forEach(linha => {
+        const nome = linha.children[0].innerText;
+        const preco = linha.children[1].children[0].value;
+        const qtd = linha.children[2].children[0].value;
+        const total = linha.children[3].innerText;
+        if (preco > 0 && qtd > 0) txt += `${nome} - R$ ${preco} x ${qtd} = ${total}\n`;
+      });
+      txt += `\nTotal Gasto: R$ ${document.getElementById("total-gasto").innerText}`;
+      txt += `\nSaldo Restante: R$ ${document.getElementById("saldo").innerText}`;
+      const blob = new Blob([txt], {type: 'text/plain'});
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "relatorio.txt";
+      a.click();
+    }
+
+    function gerarConselho(tipo) {
+      const linhas = document.querySelectorAll("#lista-mercado tr");
+      let totalGasto = 0;
+      const itensPreenchidos = [];
+      linhas.forEach(linha => {
+        const nome = linha.children[0].innerText;
+        const preco = parseFloat(linha.children[1].children[0].value) || 0;
+        const qtd = parseFloat(linha.children[2].children[0].value) || 0;
+        const subtotal = preco * qtd;
+        if (qtd > 0 && subtotal > 0) {
+          itensPreenchidos.push({ nome, preco, qtd, subtotal });
+          totalGasto += subtotal;
+        }
+      });
+
+      const economiaMeta = totalGasto * 0.15;
+      let economiaAtual = 0;
+      const sugestoes = [];
+
+      let listaFiltrada = [...itensPreenchidos];
+      if (tipo === 'essencialidade') {
+        listaFiltrada = itensPreenchidos.filter(item => naoEssenciais.includes(item.nome));
+      }
+      listaFiltrada.sort((a, b) => b.subtotal - a.subtotal);
+
+      for (const item of listaFiltrada) {
+        if (economiaAtual >= economiaMeta) break;
+        const qtdReduzir = Math.ceil(item.qtd * 0.3);
+        if (qtdReduzir >= item.qtd) continue;
+        const economia = item.preco * qtdReduzir;
+        economiaAtual += economia;
+        sugestoes.push(`Reduzir "${item.nome}" de ${item.qtd} para ${item.qtd - qtdReduzir}`);
+      }
+
+      const box = document.getElementById("conselho-box");
+      if (sugestoes.length > 0) {
+        box.innerHTML = `<strong>💡 Sugestões para economizar 15% (R$ ${economiaMeta.toFixed(2)}):</strong><ul>` + sugestoes.map(s => `<li>${s}</li>`).join('') + `</ul>`;
+      } else {
+        box.innerText = '👏 Seus gastos já estão bem controlados!';
+      }
+    }
+
+    function gerarConselhoPorQuantidade() {
+      gerarConselho('quantidade');
+    }
+    function gerarConselhoPorEssencialidade() {
+      gerarConselho('essencialidade');
+    }
+
+    criarTabela();
+  </script></body>
+</html>
